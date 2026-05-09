@@ -11,3 +11,13 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+//bun create vite
+
+//Select a framework: React
+//Select a variant: JavaScript
+//Install with bun and start now? Yes
+
+//bun add bootstrap
+//bun add bootstrap-icons
+//bun add react-router-dom
