@@ -18,6 +18,8 @@ createRoot(document.getElementById('root')).render(
 //Select a variant: JavaScript
 //Install with bun and start now? Yes
 
+//ezt itt consol-ba
 //bun add bootstrap
 //bun add bootstrap-icons
 //bun add react-router-dom
+//bun add -d jsdom @testing-library/jest-dom 
