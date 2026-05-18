@@ -284,6 +284,415 @@ namespace Bódi_Szabolcs_backend.Controllers
     }
 }
 
+Ezek a kódok a backend-hez kellenek:
+
+Program.cs:
+﻿namespace GLS_CLI
+{
+    public class Program
+    {
+
+        public static List<AutoAdatok> lista = new List<AutoAdatok>();
+
+        static void Main(string[] args)
+        {
+
+            Beolvas();
+
+            NapAdatokSzama();
+
+            SoforokSzama();
+
+            HaviOsszesKilometer();
+
+            AtlagosNapiFogyasztas();
+
+            LegtobbetVezetettSofor();
+
+        }
+
+        public static void Beolvas()
+        {
+
+            StreamReader sr = new StreamReader("GLS.txt");
+
+            while (!sr.EndOfStream)
+            {
+
+                lista.Add( new AutoAdatok( sr.ReadLine()));
+
+            }
+
+            sr.Close();
+        }
+
+        static void NapAdatokSzama()
+        {
+
+            Console.WriteLine("2. Feladat:");
+
+            Console.WriteLine($"\tAz autó használatban töltött napjainak száma:{lista.Count()}");
+
+        }
+
+        static void SoforokSzama()
+        {
+
+            Console.WriteLine("3. Feladat:");
+
+            Console.WriteLine($"\tKülönböző sofőrök száma: {lista.Select(x => x.SoforTeljesNeve).Distinct().Count()}");
+
+        }
+
+        static void HaviOsszesKilometer()
+        {
+
+            Console.WriteLine("4. Feladat:");
+
+            Console.WriteLine($"\tAz összes megtett kilométer:{lista.Select(x => x.NapiKilometer).Sum()} km");
+
+        }
+
+        public static double AtlagosNapiFogyasztasKiszamitas(double fogyasztasLiter, double megtettKilometer)
+        {
+
+            if (fogyasztasLiter <= 0 || megtettKilometer <= 0)
+            {
+
+                return 0;
+
+            }
+            else
+            {
+
+                return fogyasztasLiter / (megtettKilometer / 100);
+
+            }
+        }
+
+        static void AtlagosNapiFogyasztas()
+        {
+
+            Console.WriteLine("6. Feladat:");
+
+            double osszFogyasztas = lista.Sum(x => x.NapiFogyasztas);
+
+            double osszKm = lista.Sum(x => x.NapiKilometer);
+
+            double atlag = AtlagosNapiFogyasztasKiszamitas(osszFogyasztas, osszKm);
+
+            Console.WriteLine($"Átlagos fogyasztás: {atlag} liter/100 km");
+
+        }
+
+        static void LegtobbetVezetettSofor()
+        {
+
+            Console.WriteLine("7. Feladat:");
+
+            Console.WriteLine($"A legtöbbet vezető sofőr: {lista.GroupBy(x => x.SoforTeljesNeve).OrderByDescending(g => g.Count()).First().Key}, napok száma: {lista.GroupBy(x => x.SoforTeljesNeve).OrderByDescending(g => g.Count()).First().Count()}");
+
+        }
+    }
+}
+
+Class.cs:
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace GLS_CLI
+{
+    public class AutoAdatok
+    {
+
+        public DateTime Datum { get; private set; }
+        public string SoforTeljesNeve { get; private set; }
+        public int NapiKilometer { get; private set; }
+        public int KezbesitettCsomagokSzama { get; private set; }
+        public int NapiFogyasztas { get; private set; }
+
+        public AutoAdatok(DateTime datum, string soforTeljesNeve, int napiKilometer, int kezbesitettCsomagokSzama, int napiFogyasztas)
+        {
+            Datum = datum;
+            SoforTeljesNeve = soforTeljesNeve;
+            NapiKilometer = napiKilometer;
+            KezbesitettCsomagokSzama = kezbesitettCsomagokSzama;
+            NapiFogyasztas = napiFogyasztas;
+        }
+
+        public AutoAdatok(string adatok)
+        {
+
+            string[] sor = adatok.Split(';');
+
+            Datum = DateTime.Parse(sor[0]);
+            SoforTeljesNeve = sor[1];
+            NapiKilometer = int.Parse(sor[2]);
+            KezbesitettCsomagokSzama = int.Parse(sor[3]);
+            NapiFogyasztas = int.Parse(sor[4]);
+
+        }
+    }
+}
+
+ProgramTest.cs:
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using GLS_CLI;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
+
+namespace GLS_CLI.Tests
+{
+
+    [TestClass()]
+    public class ProgramTests
+    {
+
+        [TestMethod()]
+        [DataRow(10, 100, 10)]
+        [DataRow(16, 200, 8)]
+        [DataRow(0, 0, 0)]
+
+        public void AtlagosNapiFogyasztasKiszamitasTest(double liter, double kilometer, double elvart)
+        {
+
+            double eredmeny = Program.AtlagosNapiFogyasztasKiszamitas(liter, kilometer);
+
+            Assert.AreEqual(elvart, eredmeny);
+
+        }
+    }
+}
+
+MainWindow.xaml:
+﻿<Window x:Class="GLS_WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GLS_WPF"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800"
+        Loaded="Window_Loaded">
+    <Grid>
+
+        <Grid.ColumnDefinitions>
+
+            <ColumnDefinition Width="3*"/>
+
+            <ColumnDefinition Width="2*"/>
+
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="1" Orientation="Vertical">
+
+            <Label Content="Dátom" Margin="5"/>
+
+            <TextBox x:Name="datum" Margin="5"/>
+
+            <Label Content="Név" Margin="5"/>
+
+            <TextBox x:Name="nev" Margin="5"/>
+
+            <Label Content="Csomagok száma" Margin="5"/>
+
+            <TextBox x:Name="csomagSzam" Margin="5"/>
+
+            <Label Content="Fogyasztás (l/100km)" Margin="5"/>
+
+            <TextBox x:Name="fogasztas" Margin="5"/>
+
+            <Label Content="km" Margin="5"/>
+
+            <TextBox x:Name="km" Margin="5"/>
+
+            <Button x:Name="btnFelvitel"  Content="Felvitel" Margin="5" Click="btnFelvitel_Click"/>
+
+            <Button x:Name="btnModositas" Content="Módosítás" Margin="5" Click="btnModositas_Click"/>
+
+            <Button x:Name="btnMentes" Content="Mentés" Margin="5" Click="btnMentes_Click"/>
+
+
+        </StackPanel>
+
+        <DataGrid x:Name="dtgAdatok" Grid.Column="0" ColumnWidth="*" SelectionChanged="dtgAdatok_SelectionChanged"/>
+
+
+    </Grid>
+</Window>
+
+MainWindow.xaml.cs:
+﻿using GLS_CLI;
+using Microsoft.Win32;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+
+namespace GLS_WPF
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Program.Beolvas();
+            FrissitTabla();
+        }
+
+        private void FrissitTabla()
+        {
+            dtgAdatok.ItemsSource = null;
+            dtgAdatok.ItemsSource = Program.lista;
+        }
+
+        private bool Validalas()
+        {
+            if (string.IsNullOrWhiteSpace(datum.Text) ||
+                string.IsNullOrWhiteSpace(nev.Text) ||
+                string.IsNullOrWhiteSpace(km.Text) ||
+                string.IsNullOrWhiteSpace(csomagSzam.Text) ||
+                string.IsNullOrWhiteSpace(fogasztas.Text))
+            {
+                return false;
+            }
+
+            if (!DateTime.TryParse(datum.Text, out _))
+            {
+                return false;
+            }
+
+            if (!int.TryParse(km.Text, out int kmErtek) || kmErtek <= 0)
+            {
+                return false;
+            }
+
+            if (!int.TryParse(csomagSzam.Text, out int csomagErtek) || csomagErtek <= 0)
+            {
+                return false;
+            }
+
+            if (!int.TryParse(fogasztas.Text, out int fogyasztasErtek) || fogyasztasErtek <= 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private void btnFelvitel_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Validalas())
+            {
+                MessageBox.Show("Hibás vagy hiányzó adatok!", "Hiba");
+                return;
+            }
+
+            DateTime ujDatum = DateTime.Parse(datum.Text);
+
+            if (Program.lista.Any(x => x.Datum.Date == ujDatum.Date))
+            {
+                MessageBox.Show("Már rögzítettek adatot a kiválasztott dátumra!");
+                return;
+            }
+
+            Program.lista.Add(new AutoAdatok(
+                ujDatum,
+                nev.Text,
+                int.Parse(km.Text),
+                int.Parse(csomagSzam.Text),
+                int.Parse(fogasztas.Text)
+            ));
+
+            FrissitTabla();
+        }
+
+        private void btnModositas_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Validalas())
+            {
+                MessageBox.Show("Hibás vagy hiányzó adatok!", "Hiba");
+                return;
+            }
+
+            if (dtgAdatok.SelectedItem is not AutoAdatok kijelolt)
+            {
+                MessageBox.Show("Nincs kijelölt rekord!", "Hiba");
+                return;
+            }
+
+            DateTime ujDatum = DateTime.Parse(datum.Text);
+
+            if (Program.lista.Any(x => x != kijelolt && x.Datum.Date == ujDatum.Date))
+            {
+                MessageBox.Show("Már rögzítettek adatot a kiválasztott dátumra!");
+                return;
+            }
+
+            int index = Program.lista.IndexOf(kijelolt);
+
+            Program.lista[index] = new AutoAdatok(
+                ujDatum,
+                nev.Text,
+                int.Parse(km.Text),
+                int.Parse(csomagSzam.Text),
+                int.Parse(fogasztas.Text)
+            );
+
+            FrissitTabla();
+        }
+
+        private void btnMentes_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SaveFileDialog sfd = new SaveFileDialog();
+                sfd.FileName = "gls.txt";
+                sfd.Filter = "Szövegfájl (*.txt)|*.txt|Minden fájl (*.*)|*.*";
+
+                if (sfd.ShowDialog() == true)
+                {
+                    using StreamWriter sw = new StreamWriter(sfd.FileName);
+
+                    foreach (var item in Program.lista)
+                    {
+                        sw.WriteLine(item.ToString());
+                    }
+
+                    MessageBox.Show("Sikeres Mentés!");
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Hiba a mentés során!", "Hiba");
+            }
+        }
+
+        private void dtgAdatok_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (dtgAdatok.SelectedItem is AutoAdatok kijelolt)
+            {
+
+                datum.Text = kijelolt.Datum.ToString("yyyy.MM.dd");
+
+                nev.Text = kijelolt.SoforTeljesNeve;
+
+            }
+        }
+    }
+}
+
 Ezek a kódok a react-hoz kellenek:
 
 //bun create vite
